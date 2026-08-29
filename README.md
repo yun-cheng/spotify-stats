@@ -33,7 +33,8 @@ Genres additionally need a free Last.fm API key from
 [last.fm/api/account/create](https://www.last.fm/api/account/create), added to
 `var/config.json` as `lastfm_api_key`.
 
-No dependencies — Python 3 standard library only.
+The collector has no dependencies — Python 3 standard library only. Only the
+dashboard needs anything installed.
 
 Then install the scheduler so it collects on its own:
 
@@ -53,8 +54,12 @@ collector/            data collection — everything that writes to the database
   backfill_artists.py one-off: add credits for tracks stored pre-multi-artist
   fetch_genres.py     attach genre tags to artists via Last.fm
   schema.sql          database definition
+web/
+  app.py              Streamlit dashboard — a consumer; asks the collector to
+                      fetch rather than writing to the database itself
 scripts/
   install_agent.sh    generate and load the launchd polling agent
+requirements.txt      dashboard dependencies (the collector needs none)
 config.example.json   template — copy to var/config.json
 var/                  all runtime state — gitignored in full
   spotify.db          the database
@@ -70,6 +75,25 @@ the project's" obvious at a glance.
 Collection and presentation are kept separate: `collector/` only ever writes
 to the database, and anything that reads it is a consumer. A dashboard is the
 obvious next consumer, and it should not need to know how data arrives.
+
+## Viewing your stats
+
+The dashboard is the only part with dependencies, so it lives in a venv:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/streamlit run web/app.py
+```
+
+The sidebar shows the newest play on record and a **Fetch new plays** button
+that runs the collector on demand — useful because the scheduled poll only
+runs every 30 minutes.
+
+Filter by date range, switch between counting every credited artist and
+primary credits only, and see top tracks, artists, genres, plays per day, a
+day-by-hour listening heatmap, a searchable play-by-play history with CSV
+export, and collector health.
 
 ## Importing an export
 
